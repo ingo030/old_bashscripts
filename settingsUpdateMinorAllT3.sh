@@ -1,0 +1,2 @@
+TYPO3_DDEV_PROJECTS_FOLDER="~/Entwicklung/t3docker/"
+COMMIT_MESSAGE_PREFIX="[Update]"
