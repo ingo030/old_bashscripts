@@ -27,7 +27,10 @@ fi
 
 TYPO3_DDEV_PROJECTS_FOLDER=$(eval echo "$TYPO3_DDEV_PROJECTS_FOLDER")
 LOG_FILE="${SCRIPT_DIR}/updateMinorAllT3.log"
-> "$LOG_FILE"
+
+CURRENT_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+echo "" >> "$LOG_FILE"
+echo "[RUN] $CURRENT_TIME - Start update cycle" >> "$LOG_FILE"
 
 echo "   Search for projects in $TYPO3_DDEV_PROJECTS_FOLDER..."
 
@@ -61,9 +64,8 @@ for PROJECT_DIR in "$TYPO3_DDEV_PROJECTS_FOLDER"*/ ; do
          STASHED=false
     fi
 
-     # find highest version branch
-     # || true if we can't find a branch and grep returns 1
-     BRANCH=$(git branch -a | grep -Eo "typo3-[0-9]+\.[0-9]+" | sort -Vr | head -n1 || true)
+     # find highest version branch must start with "typo3-" and end with major.minor (e.g. typo3-12.4)
+     BRANCH=$(git branch --format '%(refname:short)' | grep -E "^typo3-[0-9]{1,2}\.[0-9]$" | sort -Vr | head -n1 || true)
      if [[ -n "$BRANCH" ]]; then
          echo "   git checkout $BRANCH "
          git checkout "$BRANCH"
