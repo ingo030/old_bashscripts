@@ -108,6 +108,8 @@ for PROJECT_DIR in "$TYPO3_DDEV_PROJECTS_FOLDER"*/ ; do
 
          echo "   commit and pushed"
      else
+         CURRENT_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+         echo "[SKIP]  $CURRENT_TIME $PROJECT_DIR: ${OLD_VERSION} already up to date" >> "$LOG_FILE"
          echo "   no changes, no commit"
      fi
 
