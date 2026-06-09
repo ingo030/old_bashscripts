@@ -4,8 +4,6 @@
 ### Local Projects and Git Commit
 ### touch updateMinorAllT3.sh && chmod u+x updateMinorAllT3.sh && vim updateMinorAllT3.sh
 #############################################
-
-set -e
 set -o pipefail
 set -u
 
@@ -66,26 +64,51 @@ for PROJECT_DIR in "$TYPO3_DDEV_PROJECTS_FOLDER"*/ ; do
 
      # find highest version branch must start with "typo3-" and end with major.minor (e.g. typo3-12.4)
      BRANCH=$(git branch --format '%(refname:short)' | grep -E "^typo3-[0-9]{1,2}\.[0-9]$" | sort -Vr | head -n1 || true)
-     if [[ -n "$BRANCH" ]]; then
-         echo "   git checkout $BRANCH "
-         git checkout "$BRANCH"
-         git pull
-     else
+
+     # early return
+     if [[ -z "$BRANCH" ]]; then
        echo "   no branch with the right definition typo3-xx.x"
        continue
      fi
 
+     echo "   git checkout $BRANCH "
+     git checkout "$BRANCH"
+     git pull
+
      # start ddev
-     ddev start && ddev auth ssh
+     if ! ddev start || ! ddev auth ssh; then
+         CURRENT_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+         echo "[ERROR] $CURRENT_TIME $PROJECT_DIR: ddev start or auth ssh failed" >> "$LOG_FILE"
+         if $STASHED; then
+           git stash pop;
+         fi
+         continue
+     fi
 
      # get current TYPO3 Version
-     ddev composer install
+     if ! ddev composer install; then
+         CURRENT_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+         echo "[ERROR] $CURRENT_TIME $PROJECT_DIR: composer install failed" >> "$LOG_FILE"
+         if $STASHED; then
+           git stash pop;
+         fi
+         ddev stop
+         continue
+     fi
      OLD_VERSION=$(ddev composer show | grep "^typo3/cms-core " |  awk '{print $2}')
      echo "   current TYPO3-Version $OLD_VERSION"
 
      # Composer update
      echo "   ddev composer update ..."
-     ddev composer update
+     if ! ddev composer update; then
+         CURRENT_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+         echo "[ERROR] $CURRENT_TIME $PROJECT_DIR: composer update failed" >> "$LOG_FILE"
+         if $STASHED; then
+           git stash pop;
+         fi
+         ddev stop
+         continue
+     fi
 
      # check for changes
      if [[ -n $(git status --porcelain composer.json composer.lock) ]]; then
