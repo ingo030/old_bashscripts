@@ -100,7 +100,7 @@ for PROJECT_DIR in "$TYPO3_DDEV_PROJECTS_FOLDER"*/ ; do
 
          for CONFIGYAML in config/sites/*/config.yaml; do
              [[ -f "$CONFIGYAML" ]] || continue
-             url=$(grep -m1 "^base:" "$CONFIGYAML" | awk '{print $2}')
+             url=$(grep -m1 "^base:" "$CONFIGYAML" | awk '{print $2}' | tr -d "'\"")
              if [[ -n "$url" ]]; then
                  echo "[Check Live] $url" >> "$LOG_FILE"
              fi
